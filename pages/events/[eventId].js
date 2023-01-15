@@ -1,14 +1,11 @@
 import { useRouter } from "next/router";
-import { getEventById } from "../../dummy-data";
+import { getFeaturedEvents, getEventById } from "../../helpers/api-util";
 import EventSummary from "../../components/event-detail/event-summary";
 import EventLogistics from "../../components/event-detail/event-logistics";
 import EventContent from "../../components/event-detail/event-content";
 
-const EventDetailPage = () => {
-	const router = useRouter();
-
-	const eventId = router.query.eventId;
-	const event = getEventById(eventId);
+const EventDetailPage = (props) => {
+	const { event } = props;
 
 	if (!event) {
 		return <p>No Event Found!</p>;
@@ -29,5 +26,32 @@ const EventDetailPage = () => {
 		</>
 	);
 };
+
+export async function getStaticProps(context) {
+	const eventId = context.params.eventId;
+
+	const event = await getEventById(eventId);
+
+	return {
+		props: {
+			event,
+		},
+		revalidate: 10,
+	};
+}
+
+export async function getStaticPaths() {
+	const events = await getFeaturedEvents();
+
+	const paths = events.map((event) => ({
+		params: {
+			eventId: event.id,
+		},
+	}));
+	return {
+		paths,
+		fallback: true,
+	};
+}
 
 export default EventDetailPage;
